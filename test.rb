@@ -1,17 +1,6 @@
 require_relative 'wpa_cli.rb'
 require 'pp'
 
-class WifiTester
-	def initialize(wpa)
-		@wpa = wpa
-	end
-
-	def test_connect
-
-	end
-
-end
-
 wpa = WpaCli.new('/usr/sbin/wpa_cli','/tmp/wpa','wlan0')
 
 unless wpa.cmd_wait_status('disconnect', {'wpa_state' => 'DISCONNECTED'}) 
