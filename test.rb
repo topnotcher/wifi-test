@@ -1,7 +1,9 @@
 require_relative 'wpa_cli.rb'
+require_relative 'dhcp.rb'
 require 'pp'
 
 wpa = WpaCli.new('/usr/sbin/wpa_cli','/tmp/wpa','wlan0')
+dhcp = DHCP.new('/sbin/dhclient', 'wlan0')
 
 unless wpa.cmd_wait_status('disconnect', {'wpa_state' => 'DISCONNECTED'}) 
 	puts "timeout while disconnecting from URI_Secure WTF?)"
@@ -15,3 +17,5 @@ if wpa.cmd_wait_status('reconnect', {'ssid' => 'URI_Secure', 'wpa_state' => 'COM
 else
 	puts "Timeout while connecting to URI_Secure"
 end
+
+dhcp.run
