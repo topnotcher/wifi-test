@@ -1,6 +1,43 @@
+require 'time'
+
 class WpaCli
 	def initialize(wpa_cli, sock_path, interface)
 		@wpa = WpaCliConn.new(wpa_cli, sock_path, interface)
+		@logger = nil
+	end
+
+	def set_logger(logger)
+		@logger = logger
+	end
+
+	def log(type, line)
+		@logger.send(type, line) if @logger
+	end
+
+	def test
+		start_time = Time.new
+
+
+		# always be sure pmk is not cached between checks
+		# this needs to be < the check interval
+		cmd 'set dot11RSNAConfigPMKLifetime=200'
+
+		# just in case - always start with the supplicant disconnected
+		unless cmd_wait_status('disconnect', {'wpa_state' => 'DISCONNECTED'}) 
+			log :error, "timeout while disconnecting from URI_Secure WTF?"
+			return false
+		end
+
+
+		unless cmd_wait_status('reconnect', {'ssid' => 'URI_Secure', 'wpa_state' => 'COMPLETED'})
+			log :error, "Timeout while connecting to URI_Secure"
+			return false
+		end
+
+		duration = Time.new - start_time
+		log :info, "Successfully connected to (%s,%s); duration: %.3fs" % [@last_status['ssid'],@last_status['bssid'], duration]
+
+		return true
 	end
 
 	def status
@@ -10,6 +47,7 @@ class WpaCli
 			k,v = line.split('=',2)
 			status[k] = v
 		end
+		@last_status = status
 		return status
 	end
 

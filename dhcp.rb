@@ -5,24 +5,28 @@ class DHCP
 	def initialize(dhclient, interface) 
 		@dhclient = dhclient
 		@interface = interface
+		@logger = nil
 	end
 
-	def run
+	def set_logger(logger)
+		@logger = logger
+	end
+
+	def test
 		begin_dhcp_test
 		dhcpin,dhcpout,wait_thr = Open3.popen2e('%s -nc -1 -d -lf /dev/null -sf /tmp/dhcp.sh %s' % [@dhclient, @interface])
 
 		dhcpout.each_line do |line|
 			handle_data line.strip
 			break if @dhcp_done
-		
 		end
 
 		end_dhcp_test
 		dhcpin.close
 		dhcpout.close
-		Process.kill("QUIT", wait_thr[:pid])
+		Process.kill("INT", wait_thr[:pid])
 		wait_thr.value
-		puts "returned"
+		return @dhcp_done
 	end
 
 	def begin_dhcp_test
@@ -43,9 +47,8 @@ class DHCP
 		else
 			status = "FAIL"
 		end
-
 		
-		log "DHCP test %s; Duration: %.3fs; %s" % [status,duration,dhcp_count_summary]
+		log :info, "DHCP test %s; Duration: %.3fs; %s" % [status,duration,dhcp_count_summary]
 	end
 
 	def handle_data(line)
@@ -63,12 +66,12 @@ class DHCP
 	def handle_dhcp_output(line)
 		if line =~ /^bound to/
 			@dhcp_done = true
-			log line
+			log :info, line
 		elsif line =~ /^DHCP/
-			log line
+			log :info, line
 			count_dhcp_request(line)
 		elsif line =~ /^Sending on/
-			log line
+			log :info, line
 		end
 	end
 
@@ -105,7 +108,7 @@ class DHCP
 		@read_env = false
 	end
 
-	def log(line)
-		puts "%s: %s" % [Time.new.inspect, line]
+	def log(type,line)
+		@logger.send(type,line) if @logger
 	end
 end

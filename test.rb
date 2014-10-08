@@ -1,21 +1,33 @@
 require_relative 'wpa_cli.rb'
 require_relative 'dhcp.rb'
+require 'logger'
 require 'pp'
+require 'time'
 
+logger = Logger.new('wifi-test.log')
 wpa = WpaCli.new('/usr/sbin/wpa_cli','/tmp/wpa','wlan0')
 dhcp = DHCP.new('/sbin/dhclient', 'wlan0')
+dhcp.set_logger(logger)
+wpa.set_logger(logger)
 
-unless wpa.cmd_wait_status('disconnect', {'wpa_state' => 'DISCONNECTED'}) 
-	puts "timeout while disconnecting from URI_Secure WTF?)"
-else
-	puts "Successfully disconnected from URI_Secure"
+tests = [wpa, dhcp]
+
+while true
+	logger.info("Starting connection tests")
+	start_time = Time.new
+	status = 'OKAY'
+	sleep_time = 0
+	tests.each do |test|
+		unless test.send :test
+			status = 'FAIL'
+			break
+		end
+		sleep 1
+		sleep_time += 1
+	end
+	logger.info("Connection tests %s; duration: %.3f" % [status,Time.new - start_time-sleep_time])	
+		
+	wpa.cmd 'disconnect'
+
+	sleep 300
 end
-
-
-if wpa.cmd_wait_status('reconnect', {'ssid' => 'URI_Secure', 'wpa_state' => 'COMPLETED'})
-	puts "Successfully connected to URI_Secure"
-else
-	puts "Timeout while connecting to URI_Secure"
-end
-
-dhcp.run
