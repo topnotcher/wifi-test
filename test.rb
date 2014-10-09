@@ -22,10 +22,10 @@ while true
 			status = 'FAIL'
 			break
 		end
-		sleep 1
-		sleep_time += 1
+		sleep 2
+		sleep_time += 2
 	end
-	logger.info("Connection tests %s; duration: %.3f" % [status,Time.new - start_time-sleep_time])	
+	logger.info("Connection tests %s; duration: %.3f" % [status,Time.new - start_time - sleep_time])	
 		
 	wpa.cmd 'disconnect'
 

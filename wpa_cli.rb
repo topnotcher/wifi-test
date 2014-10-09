@@ -59,7 +59,7 @@ class WpaCli
 		cmd cmd
 
 		(1..60).each do |i|
-			sleep 1
+			sleep 0.25
 			return true if check_status(status_checks)
 		end
 
