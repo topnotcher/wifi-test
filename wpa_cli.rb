@@ -58,7 +58,7 @@ class WpaCli
 	def cmd_wait_status(cmd, status_checks)
 		cmd cmd
 
-		(1..60).each do |i|
+		(1..300).each do |i|
 			sleep 0.25
 			return true if check_status(status_checks)
 		end
@@ -92,6 +92,8 @@ class WpaCliConn
 	end
 
 	def cmd(cmd) 
-		IO.popen('%s -p %s -i %s %s' % [@wpa_cli, @sock_path, @interface, cmd]).read.strip
+		io = IO.popen('%s -p %s -i %s %s' % [@wpa_cli, @sock_path, @interface, cmd])
+		Process.wait(io.pid)	
+		io.read.strip
 	end
 end
